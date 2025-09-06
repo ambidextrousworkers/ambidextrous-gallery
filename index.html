@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ambidextrous Workers — Project Showcase</title>
+  <style>
+    :root{
+      --bg:#000000;
+      --text:#f2f2f2;
+      --muted:#cfcfcf;
+      --accent:#e37236;
+      --tile:#111;
+      --tile-border:#222;
+    }
+    *{ box-sizing:border-box; }
+    html, body{ margin:0; padding:0; background:var(--bg); color:var(--text);
+      font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    .wrap{ max-width:1200px; margin:0 auto; padding:20px 16px 48px; }
+    header{ display:flex; align-items:center; gap:10px; padding:6px 0 16px; }
+    .dot{ width:10px; height:10px; border-radius:999px; background:var(--accent);
+          box-shadow:0 0 0 4px rgba(227,114,54,0.18); }
+    h1{ margin:0; font-size:24px; letter-spacing:.3px; }
+    .hero{ width:100%; background:#0d0d0d; border:1px solid #1c1c1c; border-radius:12px; overflow:hidden;
+      box-shadow:0 10px 28px rgba(0,0,0,0.35); }
+    .hero img{ display:block; width:100%; height:auto; object-fit:cover; max-height:70vh; }
+    .caption{ color:var(--muted); font-size:15px; line-height:1.5; padding:10px 6px 0; }
+    .caption .label{ color:var(--accent); font-weight:700; margin-right:6px; }
+    .grid{ margin-top:18px; display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:12px; }
+    .tile{ background:var(--tile); border:1px solid var(--tile-border); border-radius:10px; overflow:hidden;
+      cursor:pointer; position:relative; transition:transform .15s ease, border-color .15s ease; }
+    .tile:hover{ transform:translateY(-2px); border-color:#2a2a2a; }
+    .tile img{ width:100%; height:120px; object-fit:cover; display:block; }
+    .tile .tag{ position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,0.55); color:#fff;
+      border:1px solid rgba(255,255,255,0.2); border-radius:999px; font-size:12px; padding:2px 8px; }
+    .tile.active{ outline:2px solid var(--accent); outline-offset:2px; }
+    footer{ color:#8d8d8d; text-align:center; font-size:12px; padding:20px 0; }
+    @media (max-width:640px){ h1{ font-size:20px; } .tile img{ height:110px; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="dot"></div>
+      <h1>Ambidextrous Workers — Project Showcase</h1>
+    </header>
+    <figure class="hero" id="hero">
+      <img id="heroImg" src="" alt="Main project photo">
+    </figure>
+    <div class="caption" id="heroCaption">
+      <span class="label">Caption:</span> Loading...
+    </div>
+    <section class="grid" id="grid"></section>
+    <footer>
+      © <span id="year"></span> Ambidextrous Workers — Licensed & Insured in Suffolk County, NY
+    </footer>
+  </div>
+  <script>
+    const PHOTOS = [
+      { src: "photos/kitchen1.jpg", caption: "Kitchen remodel with shaker cabinets, quartz countertops, and subway tile backsplash.", tag: "Kitchen" },
+      { src: "photos/bathroom1.jpg", caption: "Modern bathroom renovation—large-format tile and frameless glass enclosure.", tag: "Bathroom" },
+      { src: "photos/deck1.jpg", caption: "Custom composite deck with aluminum railing—low maintenance and durable.", tag: "Exterior" },
+      { src: "photos/framing1.jpg", caption: "Open-concept framing with LVL beam installation for structural support.", tag: "Framing" },
+      { src: "photos/electrical1.jpg", caption: "Electrical service upgrade, recessed LED lighting, and smart dimmers.", tag: "Electrical" },
+      { src: "photos/windows1.jpg", caption: "New energy-efficient windows with modern lap siding for curb appeal.", tag: "Windows" },
+      { src: "photos/millwork1.jpg", caption: "Custom millwork: built-in media wall with wire management and TV mount.", tag: "Millwork" },
+      { src: "photos/concrete1.jpg", caption: "Stamped concrete patio with protective seal and contrasting border.", tag: "Concrete" },
+      { src: "photos/laundry1.jpg", caption: "Garage conversion into a laundry room with storage solutions.", tag: "Laundry" }
+    ];
+    const heroImg = document.getElementById('heroImg');
+    const heroCaption = document.getElementById('heroCaption');
+    const grid = document.getElementById('grid');
+    const yearEl = document.getElementById('year');
+    function setHero(index){
+      const item = PHOTOS[index];
+      heroImg.src = item.src;
+      heroImg.alt = item.caption || 'Project photo';
+      heroCaption.innerHTML = '<span class="label">Caption:</span> ' + (item.caption || '');
+      document.querySelectorAll('.tile').forEach((t,i)=>{ t.classList.toggle('active', i===index); });
+    }
+    function buildGrid(){
+      grid.innerHTML = '';
+      PHOTOS.forEach((p, idx)=>{
+        const tile = document.createElement('article');
+        tile.className = 'tile';
+        const img = document.createElement('img');
+        img.src = p.src;
+        img.alt = p.caption || 'Project thumbnail';
+        const tag = document.createElement('div');
+        tag.className = 'tag';
+        tag.textContent = p.tag || 'Project';
+        tile.appendChild(img); tile.appendChild(tag);
+        tile.addEventListener('click', ()=> setHero(idx));
+        grid.appendChild(tile);
+      });
+    }
+    buildGrid();
+    setHero(0);
+    yearEl.textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
