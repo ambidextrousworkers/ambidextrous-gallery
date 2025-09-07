@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ambidextrous Workers — Project Showcase (Grouped)</title>
+  <style>
+    :root{
+      --bg:#000000;
+      --text:#f2f2f2;
+      --muted:#cfcfcf;
+      --accent:#e37236;
+      --tile:#111;
+      --tile-border:#222;
+    }
+    *{ box-sizing:border-box; }
+    html, body{
+      margin:0; padding:0; background:var(--bg); color:var(--text);
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+      height:100%;
+    }
+    .page{ display:flex; flex-direction:column; min-height:100vh; }
+
+    /* Sticky top (header + hero + caption) */
+    .sticky-top{
+      position:sticky; top:0; z-index:10; background:var(--bg);
+      padding:16px 16px 10px; border-bottom:1px solid #1a1a1a;
+    }
+    header{ display:flex; align-items:center; justify-content:center; padding-bottom:10px; }
+    h1{ margin:0; font-size:22px; letter-spacing:.3px; text-align:center; }
+
+    /* Hero: fixed aspect to avoid thin bar even if image fails */
+    .hero{
+      position:relative; width:100%; max-width:1200px; margin:0 auto;
+      background:#0d0d0d; border:1px solid #1c1c1c; border-radius:12px; overflow:hidden;
+      box-shadow:0 8px 24px rgba(0,0,0,0.35);
+      aspect-ratio: 16 / 9;
+    }
+    .hero img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+    .nav-btn{
+      position:absolute; top:50%; transform:translateY(-50%);
+      background:rgba(0,0,0,0.55); color:#fff; border:1px solid #444;
+      width:44px; height:44px; border-radius:999px; cursor:pointer; font-size:18px; font-weight:700;
+      display:flex; align-items:center; justify-content:center; backdrop-filter: blur(2px);
+    }
+    .nav-btn:hover{ background:rgba(0,0,0,0.7); }
+    .nav-left{ left:10px; } .nav-right{ right:10px; }
+
+    .caption-wrap{
+      max-width:1200px; margin:8px auto 0; padding:0 4px 4px;
+      color:var(--muted); font-size:15px; line-height:1.5;
+    }
+    .caption-wrap .label{ color:var(--accent); font-weight:700; margin-right:6px; }
+
+    /* Horizontal strip: one tile per tag, infinite loop */
+    .thumbs-section{ flex:1 1 auto; padding:12px 0 16px; }
+    .strip-shell{
+      position:relative; max-width:1200px; margin:0 auto; padding:0 16px;
+    }
+    .strip{
+      overflow-x:auto; overflow-y:hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width:none;
+      white-space:nowrap; /* one line */
+      border-top:1px solid #1a1a1a; border-bottom:1px solid #1a1a1a;
+      padding:12px 0;
+    }
+    .strip::-webkit-scrollbar{ display:none; }
+
+    .tile{
+      display:inline-block; vertical-align:top;
+      width:200px; /* fixed width for predictable looping */
+      margin-right:12px;
+      background:var(--tile); border:1px solid var(--tile-border); border-radius:10px; overflow:hidden;
+      cursor:pointer; position:relative; transition:transform .15s ease, border-color .15s ease, outline-color .15s ease;
+    }
+    .tile:last-child{ margin-right:0; }
+    .tile:hover{ transform:translateY(-2px); border-color:#2a2a2a; }
+    .tile.active{ outline:2px solid var(--accent); outline-offset:2px; }
+    .tile img{ width:100%; height:120px; object-fit:cover; display:block; }
+    .tile .tag{
+      position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,0.55); color:#fff;
+      border:1px solid rgba(255,255,255,0.2); border-radius:999px; font-size:12px; padding:2px 8px;
+    }
+
+    /* Optional strip arrows (scroll helpers) */
+    .thumb-nav{ position:absolute; inset:0; pointer-events:none; }
+    .thumb-btn{
+      position:absolute; top:50%; transform:translateY(-50%);
+      pointer-events:auto;
+      background:rgba(0,0,0,0.55); color:#fff; border:1px solid #444;
+      width:36px; height:36px; border-radius:999px; cursor:pointer; font-weight:700;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .thumb-left{ left:20px; } .thumb-right{ right:20px; }
+
+    footer{ color:#8d8d8d; text-align:center; font-size:12px; padding:14px 0; border-top:1px solid #1f1f1f; }
+
+    @media (max-width:640px){
+      h1{ font-size:18px; }
+      .tile{ width:170px; }
+      .tile img{ height:110px; }
+      .nav-btn{ width:40px; height:40px; font-size:16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- Sticky top: header + main image + caption -->
+    <div class="sticky-top">
+      <header>
+        <h1>Photo Showcase</h1>
+      </header>
+
+      <figure class="hero" id="hero">
+        <button class="nav-btn nav-left" id="prevBtn" aria-label="Previous photo">‹</button>
+        <img id="heroImg" src="" alt="Main project photo">
+        <button class="nav-btn nav-right" id="nextBtn" aria-label="Next photo">›</button>
+      </figure>
+
+      <div class="caption-wrap" id="heroCaption">
+        <span class="label">Caption:</span> Loading...
+      </div>
+    </div>
+
+    <!-- Horizontal thumbnail strip: ONE per tag -->
+    <section class="thumbs-section">
+      <div class="strip-shell">
+        <div class="strip" id="strip"></div>
+
+        <!-- Optional arrows to scroll strip -->
+        <div class="thumb-nav">
+          <button class="thumb-btn thumb-left" id="thumbPrev" aria-label="Scroll thumbnails left">‹</button>
+          <button class="thumb-btn thumb-right" id="thumbNext" aria-label="Scroll thumbnails right">›</button>
+        </div>
+      </div>
+
+      <footer>
+        © <span id="year"></span> Ambidextrous Workers — Licensed & Insured in Suffolk County, NY
+      </footer>
+    </section>
+  </div>
+
+  <script>
+    /* ========== Paste your full PHOTOS array below ========== */
+    const PHOTOS = [
+        { src: "photos/AW MAIN PORTFOLIO.jpg", caption: "AW MAIN PORTFOLIO", tag: "Logo" },
+   
+/* MAIN KITCHEN */
+{ src: "photos/kitchen_main.jpg", caption: "Custom kitchen installation with redesigned layout, full appliance suite, granite countertops, and upgraded plumbing and electrical feeds.", tag: "New Kitchen" },
+{ src: "photos/main kitchen before.jpg", caption: "Custom kitchen installation with redesigned layout, full appliance suite, granite countertops, and upgraded plumbing and electrical feeds.", tag: "New Kitchen" },
+   
+   /* 2nd FLOOR KITCHEN */
+   
+/*{ src: "photos/2nd floor kitchen progress 3.jpg", caption: "Custom kitchen remodel with re-designed layout, corrective wall build, and installation of new cabinets, countertops, and appliances.", tag: "Kitchen" },*/
+{ src: "photos/3rd floor before 1.jpg", caption: "Full gut renovation of a 3rd-floor residence, including new subfloor, insulation, sheetrock, electrical, windows, framing, and a custom-fit door installation.", tag: "Gut Renovation" },
+{ src: "photos/3rd floor progress 3.jpg", caption: "Full gut renovation of a 3rd-floor residence, including new subfloor, insulation, sheetrock, electrical, windows, framing, and a custom-fit door installation.", tag: "Gut Renovation" },
+{ src: "photos/3rd floor progress 4.jpg", caption: "Full gut renovation of a 3rd-floor residence, including new subfloor, insulation, sheetrock, electrical, windows, framing, and a custom-fit door installation.", tag: "Gut Renovation" },
+{ src: "photos/3rd floor progress 5.jpg", caption: "Full gut renovation of a 3rd-floor residence, including new subfloor, insulation, sheetrock, electrical, windows, framing, and a custom-fit doors.", tag: "Gut Renovation" },
+{ src: "photos/3rd floor progress 7.jpg", caption: "Full gut renovation of a 3rd-floor residence, including new subfloor, insulation, sheetrock, electrical, windows, framing, and a custom-fit doors.", tag: "Gut Renovation" }, 
+{ src: "photos/3rd floor after 1.jpg", caption: "Full gut renovation of a 3rd-floor residence, including new subfloor, insulation, sheetrock, electrical, windows, framing, and a custom-fit doors.", tag: "Gut Renovation" },
+ 
+   
+  
+  
+
+   
+  /* BARBERSHOP */
+{ src: "photos/barbershop before 1.jpg", caption: "Commercial conversion of a former dental office into a turnkey barbershop with custom millwork stations, cabinets, and countertops.", tag: "Commercial Shop" },
+{ src: "photos/barbershop progress 1.jpg", caption: "Commercial conversion of a former dental office into a turnkey barbershop with custom millwork stations, cabinets, and countertops.", tag: "Commercial Shop" },
+{ src: "photos/barbershop after 1.jpg", caption: "Commercial conversion of a former dental office into a turnkey barbershop with custom millwork stations, cabinets, and countertops.", tag: "Commercial Shop" },
+   
+
+   
+  /* BATHROOM 1 */
+{ src: "photos/bathroom 1 progress 2.jpg", caption: "bathroom 1 progress 2", tag: "Project" },
+{ src: "photos/bathroom 1 after 2.jpg", caption: "bathroom 1 after 2", tag: "Project" },
+   
+
+   /* BATHROOM 2 */
+{ src: "photos/bathroom 2 before 1.jpg", caption: "Bathroom Renovation including new floor, vanity, toilet, removal of glass door.", tag: "Bathroom 2" },
+{ src: "photos/bathroom 2 after 1.jpg", caption: "Bathroom Renovation including new floor, vanity, toilet, removal of glass door.", tag: "Bathroom 2" },
+
+   /* CLASSROOM */
+{ src: "photos/classroom before 1.jpg", caption: "Full renovation of a laboratory classroom 'with concrete floor trenching for new electrical, epoxy flooring, and installation of new millwork and student desks.", tag: "Classroom" },
+{ src: "photos/classroom before 2.jpg", caption: "Full renovation of a laboratory classroom 'with concrete floor trenching for new electrical, epoxy flooring, and installation of new millwork and student desks.", tag: "Classroom" },
+  
+    /* DECK */
+{ src: "photos/deck before 1.jpg", caption: "Deck rebuild with reinforced posts and additional framing to increase size, finished in durable composite decking and vinyl rails.", tag: "Deck" },
+{ src: "photos/deck progress 3.jpg", caption: "Deck rebuild with reinforced posts and additional framing to increase size, finished in durable composite decking and vinyl rails.", tag: "Deck" },
+{ src: "photos/deck progress 1.jpg", caption: "Deck rebuild with reinforced posts and additional framing to increase size, finished in durable composite decking and vinyl rails.", tag: "Deck" },
+{ src: "photos/IMG_0824.jpg", caption: "Deck rebuild with reinforced posts and additional framing to increase size, finished in durable composite decking and vinyl rails.", tag: "Deck" },
+{ src: "photos/deck after 1.jpg", caption: "Deck rebuild with reinforced posts and additional framing to increase size, finished in durable composite decking and vinyl rails.", tag: "Deck" },
+
+
+    /*  DEN */
+    
+  { src: "photos/rec room before.jpg", caption: "Rec room renovation with cedar paneling and mirrors removed, new sheetrock and paint, accent wallpaper, a new wall opening, and a flush-mounted large TV.", tag: "Rec Room" },
+  { src: "photos/rec room progress 2.jpg", caption: "Rec room renovation with cedar paneling and mirrors removed, new sheetrock and paint, accent wallpaper, a new wall opening, and a flush-mounted large TV.", tag: "Rec Room" },
+  { src: "photos/rec room progress 1.jpg", caption: "Rec room renovation with cedar paneling and mirrors removed, new sheetrock and paint, accent wallpaper, a new wall opening, and a flush-mounted large TV.", tag: "Rec Room" }, 
+  { src: "photos/rec room after 2.jpg", caption: "Rec room renovation with cedar paneling and mirrors removed, new sheetrock and paint, accent wallpaper, a new wall opening, and a flush-mounted large TV.", tag: "Rec Room" }, 
+  { src: "photos/rec room after 3.jpg", caption: "Rec room renovation with cedar paneling and mirrors removed, new sheetrock and paint, accent wallpaper, a new wall opening, and a flush-mounted large TV.", tag: "Rec Room" }, 
+  
+/* KITCHEN 2 */
+    
+{ src: "photos/kitchen 1 progress.jpg", caption: "Complete kitchen rebuild with new subfloor to correct uneven flooring and custom elevations designed to meet client needs.", tag: "Custom Kitchen" },
+{ src: "photos/kitchen 1 progress 2.jpg", caption: "Complete kitchen rebuild with new subfloor to correct uneven flooring and custom elevations designed to meet client needs.", tag: "Custom Kitchen" },
+{ src: "photos/kitchen 1 progress 1.jpg", caption: "Complete kitchen rebuild with new subfloor to correct uneven flooring and custom elevations designed to meet client needs.", tag: "Custom Kitchen" },
+{ src: "photos/kitchen 1 progress 3.jpg", caption: "Complete kitchen rebuild with new subfloor to correct uneven flooring and custom elevations designed to meet client needs.", tag: "Custom Kitchen" },
+{ src: "photos/kitchen 1 after 3.jpg", caption: "Complete kitchen rebuild with new subfloor to correct uneven flooring and custom elevations designed to meet client needs.", tag: "Custom Kitchen" },
+{ src: "photos/kitchen 1 after 2.jpg", caption: "Complete kitchen rebuild with new subfloor to correct uneven flooring and custom elevations designed to meet client needs.", tag: "Custom Kitchen" },
+
+/* LIVING ROOM */
+{ src: "photos/living room 1 progress.jpg", caption: "Living room expansion by removing existing staircase and wall, featuring a custom built-in aquarium centerpiece.", tag: "Living Room" },    
+{ src: "photos/living room progress 1.jpg", caption: "Living room expansion by removing existing staircase and wall, featuring a custom built-in aquarium centerpiece.", tag: "Living Room" },
+{ src: "photos/living room 1 after.jpg", caption: "Living room expansion by removing existing staircase and wall, featuring a custom built-in aquarium centerpiece.", tag: "Living Room" },
+{ src: "photos/aquarium after 2.jpg", caption: "Custom In Wall Aquarium", tag: "Custom Design" },
+
+
+  
+ /* HOT WATER HEATER */
+  { src: "photos/water heater after 1.jpg", caption: "Conversion of a conventional gas water heater to a modern tankless system for efficient, on-demand hot water.", tag: "Water Heater" },
+  { src: "photos/water heater before 1.jpg", caption: "Conversion of a conventional gas water heater to a modern tankless system for efficient, on-demand hot water.", tag: "Water Heater" },
+
+ /* Custom Railing*/
+  { src: "photos/railing after 1.jpg", caption: "Removal of existing railing and installation of a custom-fabricated design, upgraded for safety and style in compliance with current building codes.", tag: "Custom Millwork" },
+  { src: "photos/railing after 2.jpg", caption: "Removal of existing railing and installation of a custom-fabricated design, upgraded for safety and style in compliance with current building codes.", tag: "Custom Millwork" }
+
+    
+    ];
+    /* ======================================================== */
+
+    const heroImg = document.getElementById('heroImg');
+    const heroCaption = document.getElementById('heroCaption');
+    const strip = document.getElementById('strip');
+    const yearEl = document.getElementById('year');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const thumbPrev = document.getElementById('thumbPrev');
+    const thumbNext = document.getElementById('thumbNext');
+
+    yearEl.textContent = new Date().getFullYear();
+
+    // Group photos by tag (order preserved by first appearance)
+    const map = new Map();
+    PHOTOS.forEach(p=>{
+      const tag = p.tag || "Untagged";
+      if(!map.has(tag)) map.set(tag, []);
+      map.get(tag).push(p);
+    });
+    // Array of groups: [{tag, items:[...]}, ...]
+    const GROUPS = [...map.entries()].map(([tag,items])=>({ tag, items }));
+
+    let currentGroupIndex = 0;
+    let currentPhotoIndex = 0;
+    let setWidth = 0; // width of one strip copy (for infinite loop)
+
+    function setHero(groupIdx, photoIdx){
+      if (!GROUPS.length) {
+        heroCaption.innerHTML = '<span class="label">Caption:</span> No photos found. Check your PHOTOS array.';
+        return;
+      }
+      currentGroupIndex = (groupIdx + GROUPS.length) % GROUPS.length;
+      const group = GROUPS[currentGroupIndex];
+      if (!group.items.length) return;
+
+      currentPhotoIndex = (photoIdx + group.items.length) % group.items.length;
+      const item = group.items[currentPhotoIndex];
+
+      heroImg.src = item.src;
+      heroImg.alt = item.caption || 'Project photo';
+      heroCaption.innerHTML = '<span class="label">Caption:</span> ' + (item.caption || '');
+
+      // highlight active group tile(s)
+      strip.querySelectorAll('.tile').forEach(t=>{
+        const g = Number(t.dataset.groupIndex);
+        t.classList.toggle('active', g === currentGroupIndex);
+      });
+    }
+
+    function prevPhoto(){
+      const group = GROUPS[currentGroupIndex];
+      setHero(currentGroupIndex, currentPhotoIndex - 1); // wraps within group
+    }
+    function nextPhoto(){
+      const group = GROUPS[currentGroupIndex];
+      setHero(currentGroupIndex, currentPhotoIndex + 1); // wraps within group
+    }
+
+    // Build strip with ONE tile per group. Clone 3x to create infinite loop.
+    function buildStrip(){
+      strip.innerHTML = '';
+
+      const buildOneCopy = () => {
+        GROUPS.forEach((g, idx)=>{
+          const tile = document.createElement('article');
+          tile.className = 'tile';
+          tile.dataset.groupIndex = idx;
+
+          // Use the first item of the group as thumbnail
+          const thumb = g.items[0];
+          const img = document.createElement('img');
+          img.src = thumb?.src || '';
+          img.alt = (thumb?.caption || g.tag || 'Project') + ' thumbnail';
+
+          const tag = document.createElement('div');
+          tag.className = 'tag';
+          tag.textContent = g.tag || 'Project';
+
+          tile.appendChild(img);
+          tile.appendChild(tag);
+          tile.addEventListener('click', ()=> setHero(idx, 0));
+          strip.appendChild(tile);
+        });
+      };
+
+      // Make 3 copies: left, middle (start here), right
+      buildOneCopy(); buildOneCopy(); buildOneCopy();
+
+      requestAnimationFrame(()=>{
+        setWidth = Math.round(strip.scrollWidth / 3);
+        strip.scrollLeft = setWidth; // center on middle copy
+      });
+    }
+
+    // Keep the strip looping seamlessly
+    function handleLoop(){
+      if (!setWidth) return;
+      const x = strip.scrollLeft;
+      const threshold = 20;
+      if (x < threshold){
+        strip.scrollLeft = x + setWidth;
+      } else if (x > (setWidth * 2 - threshold)){
+        strip.scrollLeft = x - setWidth;
+      }
+    }
+
+    function scrollStripBy(delta){
+      strip.scrollBy({ left: delta, behavior: 'smooth' });
+    }
+
+    // Keyboard navigation for hero (within current group)
+    window.addEventListener('keydown', (e)=>{
+      if (e.key === 'ArrowLeft') prevPhoto();
+      if (e.key === 'ArrowRight') nextPhoto();
+    });
+
+    prevBtn.addEventListener('click', prevPhoto);
+    nextBtn.addEventListener('click', nextPhoto);
+
+    thumbPrev.addEventListener('click', ()=> scrollStripBy(-240));
+    thumbNext.addEventListener('click', ()=> scrollStripBy(+240));
+
+    strip.addEventListener('scroll', handleLoop);
+
+    // Init
+    buildStrip();
+    setHero(0, 0);
+  </script>
+</body>
+</html>
